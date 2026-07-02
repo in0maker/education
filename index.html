@@ -2,413 +2,148 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>inomaker - Eğitim Portalı</title>
-    
-    <!-- Yapay Zeka Kütüphaneleri -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
     <style>
         /* Genel Sayfa Ayarları */
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             background-color: #1063e6;
             font-family: 'Arial Rounded MT Bold', 'Comic Sans MS', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            overflow: hidden;
-            position: relative;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; overflow: hidden; position: relative;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* Sol Üst Köşe Marka Logosu */
         .brand-logo {
-            position: absolute;
-            top: 30px;
-            left: 40px;
-            font-family: sans-serif;
-            font-weight: 900;
-            font-size: 1.8rem;
-            color: #000000;
-            text-transform: lowercase;
-            letter-spacing: -0.5px;
-            z-index: 10;
+            position: absolute; top: 30px; left: 40px;
+            font-family: sans-serif; font-weight: 900; font-size: 1.8rem;
+            color: #000000; text-transform: lowercase; letter-spacing: -0.5px; z-index: 10;
         }
 
         /* Arka Plan Dekorasyonları */
-        .bg-circle {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.12);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 0;
-        }
+        .bg-circle { position: absolute; background: rgba(255, 255, 255, 0.12); border-radius: 50%; pointer-events: none; z-index: 0; }
         .bg-circle-1 { width: 120px; height: 120px; top: 15%; right: 15%; }
         .bg-circle-2 { width: 90px; height: 90px; bottom: 25%; left: 10%; }
         .bg-circle-3 { width: 140px; height: 140px; bottom: 8%; right: 5%; background: rgba(106, 44, 172, 0.2); }
 
-        /* Ekran Görünümleri (Sayfalar Arası Geçiş İçin) */
+        /* Ekran Görünümleri */
         .view {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            z-index: 2;
-            width: 100%;
-            animation: fadeIn 0.5s ease;
+            display: none; flex-direction: column; align-items: center;
+            z-index: 2; width: 100%; animation: fadeIn 0.4s ease;
         }
-        .view.active {
-            display: flex;
-        }
+        .view.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* --- 1. GİRİŞ EKRANI STİLLERİ --- */
+        /* --- GİRİŞ EKRANI STİLLERİ --- */
         .speech-bubble {
-            background-color: #fffdf6;
-            border-radius: 30px;
-            padding: 15px 35px;
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: #2b2b2b;
-            text-align: center;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            position: relative;
-            margin-bottom: 25px;
+            background-color: #fffdf6; border-radius: 30px; padding: 15px 35px;
+            font-size: 1.4rem; font-weight: bold; color: #2b2b2b; text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1); position: relative; margin-bottom: 25px;
             animation: floatAnim 3s ease-in-out infinite;
         }
         .speech-bubble::after {
-            content: '';
-            position: absolute;
-            bottom: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 15px 15px 0;
-            border-style: solid;
-            border-color: #fffdf6 transparent;
-            display: block;
-            width: 0;
+            content: ''; position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%);
+            border-width: 15px 15px 0; border-style: solid; border-color: #fffdf6 transparent; display: block; width: 0;
         }
         .character-card {
-            background-color: #ffffff;
-            border-radius: 35px;
-            width: 280px;
-            padding: 30px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-            margin-bottom: 35px;
+            background-color: #ffffff; border-radius: 35px; width: 280px; padding: 30px 20px;
+            display: flex; flex-direction: column; align-items: center; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15); margin-bottom: 35px;
         }
         .sparky-avatar {
-            width: 150px;
-            height: 150px;
-            background: radial-gradient(circle at 35% 35%, #5094ff, #1a4fcc);
-            border-radius: 50%;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: 150px; height: 150px; background: radial-gradient(circle at 35% 35%, #5094ff, #1a4fcc);
+            border-radius: 50%; position: relative; display: flex; justify-content: center; align-items: center;
             box-shadow: inset -10px -10px 20px rgba(0,0,0,0.2);
         }
-        .sparky-avatar::before {
-            content: '';
-            position: absolute;
-            top: -15px;
-            width: 8px;
-            height: 20px;
-            background-color: #cbdcf7;
-            border-radius: 4px;
-        }
-        .sparky-antenna-glow {
-            position: absolute;
-            top: -24px;
-            width: 16px;
-            height: 16px;
-            background-color: #ffee55;
-            border-radius: 50%;
-            box-shadow: 0 0 15px #ffee55;
-        }
+        .sparky-avatar::before { content: ''; position: absolute; top: -15px; width: 8px; height: 20px; background-color: #cbdcf7; border-radius: 4px; }
+        .sparky-antenna-glow { position: absolute; top: -24px; width: 16px; height: 16px; background-color: #ffee55; border-radius: 50%; box-shadow: 0 0 15px #ffee55; }
         .sparky-eyes { display: flex; gap: 25px; margin-top: -10px; }
         .eye { width: 32px; height: 32px; background-color: #1a1a1a; border-radius: 50%; position: relative; }
         .eye::before { content: ''; position: absolute; top: 4px; left: 5px; width: 12px; height: 12px; background-color: #ffffff; border-radius: 50%; }
-        .eye::after { content: ''; position: absolute; top: 16px; left: 18px; width: 6px; height: 6px; background-color: #ffffff; border-radius: 50%; }
         .sparky-mouth { position: absolute; bottom: 35px; width: 24px; height: 12px; border-bottom: 4px solid #1a1a1a; border-radius: 0 0 15px 15px; }
         .character-name { font-size: 2.2rem; color: #1c66ed; margin-top: 25px; font-weight: bold; }
+        
         .btn-main {
-            background-color: #fab216;
-            color: #333333;
-            border: none;
-            border-radius: 25px;
-            padding: 15px 50px;
-            font-size: 1.8rem;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 8px 0 #c48704, 0 15px 20px rgba(0,0,0,0.2);
-            transition: all 0.1s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            background-color: #fab216; color: #333333; border: none; border-radius: 25px;
+            padding: 15px 50px; font-size: 1.8rem; font-weight: bold; cursor: pointer;
+            box-shadow: 0 8px 0 #c48704, 0 15px 20px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px;
         }
-        .btn-main:hover { transform: translateY(2px); box-shadow: 0 6px 0 #c48704, 0 12px 18px rgba(0,0,0,0.2); }
-        .btn-main:active { transform: translateY(8px); box-shadow: 0 0px 0 #c48704, 0 5px 10px rgba(0,0,0,0.1); }
+        .btn-main:active { transform: translateY(8px); box-shadow: 0 0px 0 #c48704; }
         @keyframes floatAnim { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
-        /* --- 2. BÖLÜMLER (MENÜ) EKRANI STİLLERİ --- */
-        .menu-title {
-            color: #ffffff;
-            font-size: 3rem;
-            margin-bottom: 30px;
-            text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
-        }
-        .levels-grid {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-            max-width: 800px;
-        }
+        /* --- BÖLÜMLER (MENÜ) EKRANI STİLLERİ --- */
+        .menu-title { color: #ffffff; font-size: 3rem; margin-bottom: 30px; text-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
+        .levels-grid { display: flex; gap: 25px; flex-wrap: wrap; justify-content: center; max-width: 800px; padding: 10px; }
+        
         .level-card {
-            background-color: #ffffff;
-            border-radius: 30px;
-            width: 220px;
-            height: 220px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 10px 0 #cccccc, 0 15px 20px rgba(0,0,0,0.1);
-            transition: all 0.1s ease;
-            text-decoration: none;
+            background-color: #ffffff; border-radius: 30px; width: 220px; height: 220px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 10px 0 #cccccc, 0 15px 20px rgba(0,0,0,0.1); transition: all 0.1s ease;
         }
-        .level-card:hover { transform: translateY(3px); box-shadow: 0 7px 0 #cccccc, 0 12px 15px rgba(0,0,0,0.1); }
-        .level-card:active { transform: translateY(10px); box-shadow: 0 0px 0 #cccccc, 0 5px 10px rgba(0,0,0,0.1); }
-        .level-card.locked { background-color: #e0e0e0; cursor: not-allowed; box-shadow: 0 10px 0 #b0b0b0; }
+        .level-card:active { transform: translateY(10px); box-shadow: 0 0px 0 #cccccc; }
         .level-icon { font-size: 5rem; margin-bottom: 10px; }
-        .level-name { font-size: 1.5rem; font-weight: bold; color: #333; text-align: center; padding: 0 10px; }
+        .level-name { font-size: 1.6rem; font-weight: bold; color: #333; text-align: center; padding: 0 10px; }
         
         .btn-back {
-            margin-top: 40px;
-            background-color: #ff5252;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 15px 30px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 6px 0 #d32f2f;
+            margin-top: 40px; background-color: #ff5252; color: white; border: none;
+            border-radius: 20px; padding: 15px 40px; font-size: 1.5rem; font-weight: bold;
+            cursor: pointer; box-shadow: 0 6px 0 #d32f2f;
         }
         .btn-back:active { transform: translateY(6px); box-shadow: 0 0 0 #d32f2f; }
-
-        /* --- 3. OYUN EKRANI STİLLERİ (Tonton'u Eğit) --- */
-        .game-container {
-            background: #e0f2f1;
-            padding: 20px;
-            border-radius: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            text-align: center;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .game-container h1 { color: #00796b; font-size: 26px; margin-top: 0; }
-        #webcam-container { margin: 20px 0; border: 6px solid #333; border-radius: 20px; overflow: hidden; display: inline-block; background: #000; min-width: 300px; min-height: 300px;}
-        #robot-status { font-size: 70px; margin: 15px 0; }
-        .target-box { background: #fff9c4; padding: 15px; font-size: 20px; font-weight: bold; border-radius: 15px; margin-bottom: 10px; color: #333; }
-        #btn-start-camera { background: #00796b; color: white; border: none; padding: 15px 30px; font-size: 1.2rem; border-radius: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 5px 0 #004d40; margin-bottom: 15px; }
-        #btn-start-camera:active { transform: translateY(5px); box-shadow: 0 0 0 #004d40; }
-        
     </style>
 </head>
 <body>
 
-    <!-- inomaker Marka İmzası -->
     <div class="brand-logo">inomaker</div>
 
-    <!-- Arka Plan Süsleri -->
     <div class="bg-circle bg-circle-1"></div>
     <div class="bg-circle bg-circle-2"></div>
     <div class="bg-circle bg-circle-3"></div>
 
-    <!-- ========================================== -->
-    <!-- 1. GİRİŞ EKRANI -->
-    <!-- ========================================== -->
     <div id="view-welcome" class="view active">
         <div class="speech-bubble">Selam! Ben Sparky. Hadi oynayalım!</div>
         <div class="character-card">
             <div class="sparky-avatar">
                 <div class="sparky-antenna-glow"></div>
-                <div class="sparky-eyes">
-                    <div class="eye"></div>
-                    <div class="eye"></div>
-                </div>
+                <div class="sparky-eyes"><div class="eye"></div><div class="eye"></div></div>
                 <div class="sparky-mouth"></div>
             </div>
             <div class="character-name">Sparky</div>
         </div>
-        <button class="btn-main" onclick="switchView('view-levels')">
-            Başla! <span>▶</span>
-        </button>
+        <button class="btn-main" onclick="switchView('view-levels')">Başla! ▶</button>
     </div>
 
-    <!-- ========================================== -->
-    <!-- 2. BÖLÜMLER (MENÜ) EKRANI -->
-    <!-- ========================================== -->
     <div id="view-levels" class="view">
         <h2 class="menu-title">Oyun Seç 🎮</h2>
         <div class="levels-grid">
             
-            <!-- 1. Oyun: Tonton'u Eğit -->
-            <div class="level-card" onclick="switchView('view-game-tonton')">
+            <div class="level-card" onclick="location.href='Games/CameraAI.html'">
                 <div class="level-icon">🤖📸</div>
-                <div class="level-name">Tonton'u Eğit</div>
+                <div class="level-name">Camera AI</div>
             </div>
 
-            <!-- Kilitli/Gelecek Oyun Alanları -->
-            <div class="level-card locked">
-                <div class="level-icon">🔒</div>
-                <div class="level-name">Çok Yakında</div>
+            <div class="level-card" onclick="location.href='Games/ML.html'">
+                <div class="level-icon">🧠💻</div>
+                <div class="level-name">Machine Learning Oyunu</div>
             </div>
-            <div class="level-card locked">
-                <div class="level-icon">🔒</div>
-                <div class="level-name">Çok Yakında</div>
+
+            <div class="level-card" onclick="location.href='Games/FaceDetection.html'">
+                <div class="level-icon">🧠📸</div>
+                <div class="level-name">Face Detection Oyunu</div>
             </div>
 
         </div>
         <button class="btn-back" onclick="switchView('view-welcome')">⬅ Geri Dön</button>
     </div>
 
-    <!-- ========================================== -->
-    <!-- 3. OYUN EKRANI (Tonton'u Eğit) -->
-    <!-- ========================================== -->
-    <div id="view-game-tonton" class="view">
-        <div class="game-container">
-            <h1>Kamerayı Aç ve Tonton'a Kartı Göster! 🤖📸</h1>
-            
-            <div class="target-box" id="task-text">Tonton'un İstediği Hava: ☀️ GÜNEŞLİ</div>
-            
-            <button id="btn-start-camera" onclick="initCamera()">Kamerayı Başlat 🎬</button>
-            
-            <div>
-                <div id="webcam-container"></div>
-            </div>
-            
-            <div id="robot-status">🤖🧠</div>
-            <div id="label-container" style="font-size: 1.2rem; font-weight: bold; color: #555; background: #fff; padding: 10px; border-radius: 10px;">
-                Kameradan gelen veri bekleniyor...
-            </div>
-
-            <br>
-            <!-- Oyundan çıkış butonu -->
-            <button class="btn-back" style="margin-top: 20px;" onclick="stopCameraAndGoBack()">⬅ Menüye Dön</button>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- SCRİPTLER (Sayfa Geçişi ve Yapay Zeka) -->
-    <!-- ========================================== -->
-    <script type="text/javascript">
-        
-        // --- SAYFA GEÇİŞ SİSTEMİ ---
+    <script>
         function switchView(viewId) {
-            // Tüm ekranları gizle
-            document.querySelectorAll('.view').forEach(el => {
-                el.classList.remove('active');
-            });
-            // İstenen ekranı göster
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
         }
-
-        // --- YAPAY ZEKA OYUNU KODLARI ---
-        const URL = "https://teachablemachine.withgoogle.com/models/ws0dmFv3O/"; 
-        let model, webcam, labelContainer, maxPredictions;
-        let isCameraRunning = false;
-
-        async function initCamera() {
-            if(isCameraRunning) return; // Zaten çalışıyorsa tekrar başlatma
-
-            document.getElementById('btn-start-camera').style.display = 'none';
-            document.getElementById('label-container').innerHTML = "Yapay zeka modeli yükleniyor... ⏳";
-            
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
-
-            try {
-                // Modeli yüklüyoruz
-                model = await tmImage.load(modelURL, metadataURL);
-                maxPredictions = model.getTotalClasses();
-
-                // Kamerayı kuruyoruz
-                const flip = true; 
-                webcam = new tmImage.Webcam(300, 300, flip); 
-                await webcam.setup(); 
-                await webcam.play();
-                isCameraRunning = true;
-                
-                window.requestAnimationFrame(loop);
-
-                // Kamerayı ekrana basıyoruz
-                const webcamContainer = document.getElementById("webcam-container");
-                webcamContainer.innerHTML = ''; // İçini temizle
-                webcamContainer.appendChild(webcam.canvas);
-                labelContainer = document.getElementById("label-container");
-            } catch (error) {
-                document.getElementById('label-container').innerHTML = "Kamera açılamadı. İzin verdiğinden emin ol!";
-                document.getElementById('btn-start-camera').style.display = 'inline-block';
-            }
-        }
-
-        async function loop() {
-            if(!isCameraRunning) return; // Kamera durdurulduysa döngüyü kes
-            webcam.update(); 
-            await predict();
-            window.requestAnimationFrame(loop);
-        }
-
-        async function predict() {
-            if(!model || !webcam) return;
-            
-            const prediction = await model.predict(webcam.canvas);
-            
-            let highestPrediction = { className: "", probability: 0 };
-            for (let i = 0; i < maxPredictions; i++) {
-                if(prediction[i].probability > highestPrediction.probability) {
-                    highestPrediction = prediction[i];
-                }
-            }
-
-            if(highestPrediction.probability > 0.85) {
-                labelContainer.innerHTML = "Gördüğüm: " + highestPrediction.className;
-                
-                if(highestPrediction.className === "Gunes") {
-                    document.getElementById('robot-status').textContent = "🕶️🤖👍";
-                    document.getElementById('label-container').innerHTML = "Harika! Güneş'i tanıdım ve gözlüğü taktım! 😎";
-                }
-            }
-        }
-
-        // Oyundan çıkarken kamerayı kapatmak için
-        function stopCameraAndGoBack() {
-            if(webcam && isCameraRunning) {
-                webcam.stop();
-                isCameraRunning = false;
-                document.getElementById('webcam-container').innerHTML = ''; // Görüntüyü temizle
-                document.getElementById('btn-start-camera').style.display = 'inline-block'; // Butonu geri getir
-                document.getElementById('label-container').innerHTML = "Kameradan gelen veri bekleniyor...";
-                document.getElementById('robot-status').textContent = "🤖🧠";
-            }
-            switchView('view-levels'); // Menüye dön
-        }
     </script>
-
 </body>
 </html>

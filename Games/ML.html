@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yapay Zekayı Eğit: Robotu Besle!</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            touch-action: manipulation;
+            overflow-x: hidden;
+        }
+        .game-container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+        }
+        h1 { color: #2c3e50; font-size: 24px; }
+        .info-text { color: #7f8c8d; font-size: 16px; }
+        .score-board {
+            background: #e8f4fd;
+            color: #2980b9;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .robots-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+        }
+        .robot {
+            border: 4px dashed #bdc3c7;
+            border-radius: 15px;
+            padding: 20px;
+            width: 40%;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            position: relative;
+        }
+        .robot.hovered {
+            border-color: #2ecc71;
+            background: #e8f8f5;
+            transform: scale(1.05);
+        }
+        .robot-face { font-size: 50px; }
+        .food-zone {
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            position: relative;
+        }
+        .draggable {
+            font-size: 60px;
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.2s, top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s;
+            position: relative;
+            z-index: 10;
+        }
+        .draggable:active { cursor: grabbing; }
+        .status-panel {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: none;
+            font-size: 18px;
+        }
+        .success-ai {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        .ai-thinking {
+            color: #e67e22;
+            font-style: italic;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>🤖 Robotu Besle: Yapay Zekayı Eğit! 🍎🥦</h1>
+        <p class="info-text">Yiyecekleri doğru robota sürükle. Yapay zekaya meyve ve sebzeleri öğret!</p>
+        
+        <div class="score-board">
+            Yapay Zekanın Öğrenme Seviyesi: <span id="progress">0%</span>
+        </div>
+
+        <div class="robots-container">
+            <div class="robot" id="fruit-robot" data-target="meyve">
+                <div class="robot-face">🍎</div>
+                <h3>Meyve Robotu</h3>
+                <div class="counter">Öğrenilen: <span id="fruit-count">0</span></div>
+            </div>
+
+            <div class="robot" id="vegetable-robot" data-target="sebze">
+                <div class="robot-face">🥦</div>
+                <h3>Sebze Robotu</h3>
+                <div class="counter">Öğrenilen: <span id="veg-count">0</span></div>
+            </div>
+        </div>
+
+        <div class="food-zone">
+            <div id="active-food" class="draggable" draggable="true"></div>
+        </div>
+
+        <div id="ai-status" class="status-panel"></div>
+    </div>
+
+    <script>
+        // İnsan eliyle eğitilecek ilk havuz (8 adet)
+        const foods = [
+            { name: "🍎", type: "meyve" },
+            { name: "🥦", type: "sebze" },
+            { name: "🍌", type: "meyve" },
+            { name: "🥕", type: "sebze" },
+            { name: "🍓", type: "meyve" },
+            { name: "🌽", type: "sebze" },
+            { name: "🍇", type: "meyve" },
+            { name: "🥔", type: "sebze" }
+        ];
+
+        // Eğitim bittikten sonra Yapay Zekanın KENDİ KENDİNE test edeceği 5 yeni nesne
+        const aiTestFoods = [
+            { name: "🥑", type: "meyve", label: "Avokado" },
+            { name: "🍉", type: "meyve", label: "Karpuz" },
+            { name: "🍄", type: "sebze", label: "Mantar" },
+            { name: "🍍", type: "meyve", label: "Ananas" },
+            { name: "🧅", type: "sebze", label: "Soğan" }
+        ];
+
+        let currentFoodIndex = 0;
+        let aiTestIndex = 0;
+        let trainedCount = 0;
+        let fruitCount = 0;
+        let vegCount = 0;
+
+        const activeFoodEl = document.getElementById('active-food');
+        const robots = document.querySelectorAll('.robot');
+        const progressEl = document.getElementById('progress');
+        const fruitCountEl = document.getElementById('fruit-count');
+        const vegCountEl = document.getElementById('veg-count');
+        const aiStatusEl = document.getElementById('ai-status');
+
+        function loadNextFood() {
+            if (currentFoodIndex < foods.length) {
+                activeFoodEl.innerText = foods[currentFoodIndex].name;
+                activeFoodEl.style.display = "block";
+            } else {
+                startAILearningPhase();
+            }
+        }
+
+        // Sürükle Bırak Mekaniği
+        activeFoodEl.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', foods[currentFoodIndex].type);
+        });
+
+        robots.forEach(robot => {
+            robot.addEventListener('dragover', (e) => e.preventDefault());
+            robot.addEventListener('dragenter', function() { this.classList.add('hovered'); });
+            robot.addEventListener('dragleave', function() { this.classList.remove('hovered'); });
+            robot.addEventListener('drop', function(e) {
+                this.classList.remove('hovered');
+                const foodType = e.dataTransfer.getData('text/plain');
+                const robotTarget = this.getAttribute('data-target');
+
+                if (foodType === robotTarget) {
+                    processCorrectDrop(robotTarget);
+                } else {
+                    alert("🤖 Bip bop! Yanlış sınıflandırma. Tekrar dene!");
+                }
+            });
+        });
+
+        function processCorrectDrop(type) {
+            if (type === 'meyve') {
+                fruitCount++;
+                fruitCountEl.innerText = fruitCount;
+            } else {
+                vegCount++;
+                vegCountEl.innerText = vegCount;
+            }
+            trainedCount++;
+            let progressPercentage = Math.round((trainedCount / foods.length) * 100);
+            progressEl.innerText = progressPercentage + "%";
+            currentFoodIndex++;
+            loadNextFood();
+        }
+
+        // YAPAY ZEKA OTOMATİK TEST AŞAMASI
+        function startAILearningPhase() {
+            progressEl.innerText = "100% (Eğitim Tamamlandı)";
+            aiStatusEl.className = "status-panel success-ai";
+            aiStatusEl.innerHTML = `
+                <p>🎉 TEBRİKLER! Yapay Zekayı Eğittiniz.</p>
+                <p>Şimdi yapay zeka, öğrendiklerini kullanarak yeni gelen 5 yiyeceği <strong>kendi kendine</strong> kutulara yerleştirecek!</p>
+                <button id="start-ai-btn" style="padding:12px 24px; font-size:18px; cursor:pointer; border-radius:8px; border:none; background:#2ecc71; color:white; font-weight:bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Yapay Zekayı Başlat 🚀</button>
+            `;
+
+            document.getElementById('start-ai-btn').addEventListener('click', () => {
+                document.getElementById('start-ai-btn').style.display = "none";
+                runAIEngine();
+            });
+        }
+
+        function runAIEngine() {
+            if (aiTestIndex < aiTestFoods.length) {
+                const currentAIFood = aiTestFoods[aiTestIndex];
+                
+                // Reset element position and styles
+                activeFoodEl.style.transition = "none";
+                activeFoodEl.style.top = "0px";
+                activeFoodEl.style.left = "0px";
+                activeFoodEl.style.opacity = "1";
+                activeFoodEl.innerText = currentAIFood.name;
+                activeFoodEl.style.display = "block";
+
+                aiStatusEl.innerHTML = `<p>🤖 Yapay Zeka Düşünüyor... Yeni Nesne: <strong>${currentAIFood.label}</strong></p><div class="ai-thinking">Veriler taranıyor, şekil analiz ediliyor...</div>`;
+
+                // Yapay zekanın "Düşünme" efekti için 1.5 saniye bekle, sonra animasyonla fırlat
+                setTimeout(() => {
+                    animateToRobot(currentAIFood);
+                }, 1500);
+
+            } else {
+                aiStatusEl.innerHTML = "🎯 <strong>MUHTEŞEM!</strong> Yapay zeka 5 yeni nesneyi de başarıyla analiz etti ve doğru robotları besledi. Harika bir öğretmen oldun!";
+            }
+        }
+
+        function animateToRobot(foodObj) {
+            const fruitRobot = document.getElementById('fruit-robot');
+            const vegRobot = document.getElementById('vegetable-robot');
+            const targetRobot = foodObj.type === 'meyve' ? fruitRobot : vegRobot;
+
+            // Koordinat hesaplama (Yiyeceğin robota uçma animasyonu)
+            const foodRect = activeFoodEl.getBoundingClientRect();
+            const robotRect = targetRobot.getBoundingClientRect();
+
+            const deltaX = (robotRect.left + robotRect.width / 2) - (foodRect.left + foodRect.width / 2);
+            const deltaY = (robotRect.top + robotRect.height / 2) - (foodRect.top + foodRect.height / 2);
+
+            // Animasyonu tetikle
+            activeFoodEl.style.transition = "top 0.8s cubic-bezier(0.25, 1, 0.5, 1), left 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s, opacity 0.8s";
+            activeFoodEl.style.left = deltaX + "px";
+            activeFoodEl.style.top = deltaY + "px";
+            activeFoodEl.style.transform = "scale(0.3)";
+            activeFoodEl.style.opacity = "0";
+
+            // Robotun yiyeceği yeme/büyüme efekti
+            setTimeout(() => {
+                if (foodObj.type === 'meyve') {
+                    fruitCount++;
+                    fruitCountEl.innerText = fruitCount;
+                } else {
+                    vegCount++;
+                    vegCountEl.innerText = vegCount;
+                }
+                
+                targetRobot.style.transform = "scale(1.15)";
+                targetRobot.style.borderColor = "#2ecc71";
+                
+                setTimeout(() => {
+                    targetRobot.style.transform = "scale(1)";
+                    targetRobot.style.borderColor = "#bdc3c7";
+                    
+                    // Bir sonraki yapay zeka test yiyeceğine geç
+                    aiTestIndex++;
+                    runAIEngine();
+                }, 300);
+
+            }, 800);
+        }
+
+        loadNextFood();
+    </script>
+</body>
+</html>
