@@ -8,11 +8,14 @@
     <style>
         /* Genel Sayfa Ayarları */
         body {
-            margin: 0; padding: 0;
+            margin: 0; padding: 40px 20px; /* Üstten ve alttan taşma payı eklendi */
             background-color: #1063e6;
             font-family: 'Arial Rounded MT Bold', 'Comic Sans MS', sans-serif;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; overflow: hidden; position: relative;
+            min-height: 100vh; 
+            overflow-y: auto; /* Dikey kaydırmaya izin verildi 🚀 */
+            position: relative;
+            box-sizing: border-box;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
         }
@@ -143,6 +146,8 @@
         function switchView(viewId) {
             document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
+            // Ekran değiştiğinde otomatik olarak sayfanın en üstüne odaklanmasını sağlar
+            window.scrollTo(0, 0); 
         }
     </script>
 </body>
