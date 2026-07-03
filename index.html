@@ -104,6 +104,31 @@
             cursor: pointer; box-shadow: 0 6px 0 #d32f2f; transition: all 0.1s;
         }
         .btn-back:active { transform: translateY(6px); box-shadow: 0 0 0 #d32f2f; }
+/* MOBİL VE TABLET UYUMU İÇİN MEDYA SORGULARI */
+        @media (max-width: 850px), (max-height: 800px) {
+            body { padding: 15px 10px; }
+            
+            /* Giriş Ekranı Küçültmeleri */
+            .speech-bubble { font-size: 1.2rem; padding: 15px 25px; margin-bottom: 20px; }
+            .character-card { width: 280px; padding: 25px 15px; margin-bottom: 25px; }
+            .sparky-avatar { width: 140px; height: 140px; }
+            .sparky-avatar::before { top: -15px; height: 20px; }
+            .sparky-antenna-glow { top: -25px; width: 15px; height: 15px; }
+            .sparky-eyes { gap: 20px; margin-top: -10px; }
+            .eye { width: 30px; height: 30px; }
+            .eye::before { width: 12px; height: 12px; top: 4px; left: 6px; }
+            .sparky-mouth { bottom: 30px; width: 24px; height: 12px; }
+            .character-name { font-size: 2rem; margin-top: 15px; }
+            .btn-main { padding: 15px 40px; font-size: 1.6rem; }
+
+            /* Menü Ekranı Küçültmeleri */
+            .menu-title { font-size: 2.5rem; margin-bottom: 20px; }
+            .levels-grid { gap: 15px; }
+            .level-card { width: 150px; height: 150px; border-radius: 20px; }
+            .level-icon { font-size: 3.5rem; margin-bottom: 5px; }
+            .level-name { font-size: 1.1rem; }
+            .btn-back { margin-top: 30px; padding: 12px 30px; font-size: 1.2rem; }
+        }
     </style>
 </head>
 <body>

@@ -14,7 +14,7 @@
             height: 100vh;
             overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none;
+            touch-action: manipulation;
            
             display: flex;
             justify-content: center;
@@ -59,13 +59,14 @@
             display: block;
         }
 
-        /* Sol Üst Köşe Marka Logosu */
+      
+       /* Sol Üst Köşe Marka Logosu */
         .logo-img {
             position: absolute; 
-            top: 30px; 
-            left: 30px; 
-            width: 40%; 
-            max-width: 220px; 
+            top: 15px; /* 30px'ten 15px'e düşürdük */
+            left: 15px; /* 30px'ten 15px'e düşürdük */
+            width: 25%; /* Yüzdeyi küçülttük */
+            max-width: 110px; /* Maksimum genişliği 220px'ten 110px'e çektik */
             height: auto;
             z-index: 10; 
             pointer-events: none; 
@@ -130,8 +131,13 @@
 
     <img src="../../logo.png" alt="inomaker logo" class="logo-img">
 
-    <div class="game-wrapper" id="gameWrapper">
-        <iframe src="game.html" scrolling="no" allow="fullscreen; autoplay"></iframe>
+   
+<div class="game-wrapper" id="gameWrapper">
+        <iframe src="game.html" 
+                scrolling="no" 
+                allow="fullscreen; autoplay; touch-action" 
+                style="touch-action: manipulation;">
+        </iframe>
     </div>
 
     <button class="btn-back" onclick="location.href='../../index.html#levels'">
