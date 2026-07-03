@@ -2,9 +2,12 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sesli ve Görsel Emoji Masal Sihirbazı</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -13,6 +16,7 @@
             align-items: center;
             min-height: 100vh;
             touch-action: manipulation;
+            background-color: #f5f5f5;
         }
         .game-container {
             background: white;
@@ -20,8 +24,9 @@
             border-radius: 30px;
             text-align: center;
             max-width: 900px;
-            width: 100%;
-            margin: 10px;
+            width: 95%;
+            margin: 20px auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         }
         h1 { color: #e65100; font-size: 28px; margin-bottom: 5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
         .info-text { color: #5d4037; font-size: 16px; margin-bottom: 20px; font-weight: bold; }
@@ -45,8 +50,8 @@
             flex-direction: column;
             gap: 15px;
         }
-        .section-title { font-size: 12px; font-weight: bold; color: #e65100; text-align: left; }
-        .emoji-group { display: flex; gap: 10px; justify-content: start; }
+        .section-title { font-size: 13px; font-weight: bold; color: #e65100; text-align: left; }
+        .emoji-group { display: flex; gap: 10px; justify-content: start; flex-wrap: wrap; }
         
         .emoji-btn {
             font-size: 36px;
@@ -61,9 +66,18 @@
             justify-content: center;
             align-items: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            /* Mobil dokunma parlamasını engelle */
+            -webkit-tap-highlight-color: transparent; 
         }
-        .emoji-btn:hover { transform: scale(1.1); border-color: #ffb74d; background: #fff8e1; }
-        .emoji-btn.selected { border-color: #e65100; background: #ffe082; box-shadow: 0 0 10px #ffb74d; }
+        
+        /* Sadece fare (hover) destekleyen cihazlarda büyütme efekti çalışsın 
+           (Tabletlerde basılı kalma hatasını önler) */
+        @media (hover: hover) {
+            .emoji-btn:hover { transform: scale(1.1); border-color: #ffb74d; background: #fff8e1; }
+        }
+        
+        .emoji-btn:active { transform: scale(0.95); }
+        .emoji-btn.selected { border-color: #e65100; background: #ffe082; box-shadow: 0 0 10px #ffb74d; transform: scale(1.05); }
 
         /* Sağ Panel: Yapay Zeka Görsel Üretim Sahnesi (Ekran) */
         .ai-screen-panel {
@@ -104,12 +118,12 @@
 
         /* Alt Panel: Sesli Hikaye Kutusu */
         .story-player-box {
-            margin-top: 20px;
+            margin-top: auto;
             padding: 20px;
             border-radius: 20px;
             border: 3px solid #ffb74d;
             background: #fffde7;
-            min-height: 80px;
+            min-height: 100px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -127,6 +141,35 @@
         .bar:nth-child(3) { animation-delay: 0.2s; }
         .bar:nth-child(4) { animation-delay: 0.3s; }
         @keyframes bounce { 100% { height: 5px; } }
+
+        /* ========================================= */
+        /* TABLET VE TELEFON İÇİN RESPONSIVE TASARIM */
+        /* ========================================= */
+        @media (max-width: 850px) {
+            h1 { font-size: 24px; }
+            .main-layout {
+                flex-direction: column; /* Yan yana duran panelleri alt alta al */
+            }
+            .selection-panel {
+                width: 100%;
+                padding: 20px;
+            }
+            .emoji-group {
+                justify-content: center; /* Butonları ortala */
+            }
+            .section-title {
+                text-align: center;
+            }
+            .ai-screen-panel {
+                width: 100%;
+            }
+            .ai-canvas {
+                height: 220px;
+            }
+            .story-text {
+                font-size: 18px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -169,7 +212,7 @@
                 </div>
 
                 <div class="story-player-box">
-                    <div class="story-text" id="story-text">Lütfen sol taraftan 3 adet emoji seçerek yapay zekayı tetikleyin!</div>
+                    <div class="story-text" id="story-text">Lütfen ekran üzerinden 3 adet emoji seçerek yapay zekayı tetikleyin!</div>
                     <div class="audio-wave" id="audio-wave">
                         <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
                     </div>
@@ -206,7 +249,7 @@
             document.getElementById('vehicle-layer').style.display = "none";
             document.getElementById('bg-layer').className = "canvas-bg-layer";
             document.getElementById('ai-loading').style.display = "block";
-            document.getElementById('audio-wave').style.style = "none";
+            document.getElementById('audio-wave').style.display = "none";
             window.speechSynthesis.cancel(); // Önceki ses varsa sustur
 
             document.getElementById('story-text').innerText = "🤖 Yapay Zeka resmi çiziyor ve hikayeyi seslendiriyor...";
@@ -239,7 +282,7 @@
                     actorLayer.style.left = "55%";
                 } else {
                     actorLayer.style.bottom = "20px";
-                    actorLayer.style.left = "20% ";
+                    actorLayer.style.left = "20%";
                     vehicleLayer.style.bottom = "30px";
                 }
 
@@ -276,6 +319,11 @@
 
                 // Konuşma bittiğinde animasyonu durdur
                 utterance.onend = () => {
+                    document.getElementById('audio-wave').style.display = 'none';
+                };
+
+                // Olası hatalara karşı dalgayı gizle
+                utterance.onerror = () => {
                     document.getElementById('audio-wave').style.display = 'none';
                 };
 

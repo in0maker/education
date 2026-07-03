@@ -81,9 +81,11 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            position: relative;
+            z-index: 10;
         }
         .icecream-item span { font-size: 11px; font-weight: bold; color: #e65100; margin-top: 5px; }
-        .icecream-item:active { cursor: grabbing; }
+        .icecream-item:active { cursor: grabbing; transform: scale(1.1); }
 
         /* Hedef Sepetler */
         .basket-box {
@@ -212,11 +214,10 @@
         </div>
 
         <div class="factory-zone">
-            <!-- 1. AŞAMA: Manuel Eğitim Alanı -->
             <div class="training-zone" id="training-zone">
                 <div class="icecream-box">
-                    <div class="icecream-item" id="ice-good" draggable="true" data-type="normal">🍦<span>Mükemmel</span></div>
-                    <div class="icecream-item" id="ice-bad" draggable="true" data-type="anomali">🌶️🍦<span>Biberli Hata!</span></div>
+                    <div class="icecream-item" id="ice-good" data-type="normal">🍦<span>Mükemmel</span></div>
+                    <div class="icecream-item" id="ice-bad" data-type="anomali">🌶️🍦<span>Biberli Hata!</span></div>
                 </div>
                 
                 <div class="basket-box">
@@ -225,7 +226,6 @@
                 </div>
             </div>
 
-            <!-- 2. AŞAMA: Yapay Zeka Otomatik Bant Sistemi -->
             <div class="scanner-robot" id="scanner-robot">🤖</div>
             <div class="laser-beam" id="laser-beam"></div>
             
@@ -237,7 +237,6 @@
 
         <div id="status-text" class="status-panel">🍦 Fabrika kalite kontrol robotunun gözü bozuldu! Lütfen normal dondurmayı LEZZETLİ'ye, biberli anomalili dondurmayı HATALI sepetine sürükleyip robota standardı öğretin.</div>
 
-        <!-- Canlı Fabrika Raporu -->
         <div class="counter-board">
             <div class="counter-box" style="color: #2e7d32;">✅ Onaylanan Temiz Ürün: <span id="good-count">0</span></div>
             <div class="counter-box" style="color: #c62828;">🚨 Yakalanan Anomali: <span id="bad-count">0</span></div>
@@ -288,47 +287,112 @@
         const scannerRobot = document.getElementById('scanner-robot');
         const laserBeam = document.getElementById('laser-beam');
 
-        // Sürükle Bırak Olayları (Eğitim Aşaması)
+        // --- HEM BİLGİSAYAR HEM TABLET İÇİN POINTER EVENTS SÜRÜKLE-BIRAK SİSTEMİ ---
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+        let activeIceCream = null;
+
         iceCreams.forEach(ice => {
-            ice.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', e.target.id);
+            // Tarayıcının varsayılan sürükleme davranışlarını engelle
+            ice.addEventListener('dragstart', (e) => e.preventDefault());
+            ice.style.touchAction = 'none';
+
+            ice.addEventListener('pointerdown', (e) => {
+                isDragging = true;
+                activeIceCream = ice;
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                ice.style.transition = 'none'; 
+                ice.style.zIndex = '100'; // Sürüklenen öğeyi her şeyin üstüne al
+                ice.setPointerCapture(e.pointerId);
             });
-        });
 
-        baskets.forEach(basket => {
-            basket.addEventListener('dragover', (e) => e.preventDefault());
-            basket.addEventListener('dragenter', function() { this.classList.add('hovered'); });
-            basket.addEventListener('dragleave', function() { this.classList.remove('hovered'); });
-            
-            basket.addEventListener('drop', function(e) {
-                this.classList.remove('hovered');
-                const draggedId = e.dataTransfer.getData('text/plain');
-                const draggedElement = document.getElementById(draggedId);
-                if (!draggedElement) return;
+            ice.addEventListener('pointermove', (e) => {
+                if (!isDragging || activeIceCream !== ice) return;
+                
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                
+                // Öğeyi serbestçe hareket ettir
+                ice.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0) scale(1.1)`;
 
-                const iceType = draggedElement.dataset.type;
-                const basketTarget = this.dataset.target;
-
-                if (iceType === basketTarget) {
-                    this.classList.add('success');
-                    draggedElement.style.display = "none";
-                    playSound('ogrenme');
-                    trainedCount++;
-
-                    let percent = Math.round((trainedCount / requiredTries) * 100);
-                    progress.style.width = percent + "%";
-                    progressText.innerText = percent + "%";
-
-                    statusText.innerHTML = `🎯 Harika! Yapay zeka bu dondurmanın özelliklerini veri tabanına işledi.`;
-
-                    if (trainedCount === requiredTries) {
-                        startAIScannerPhase();
+                // Sepetlerin üzerine gelip gelinmediğini kontrol et (Hover efekti)
+                baskets.forEach(basket => {
+                    const rect = basket.getBoundingClientRect();
+                    if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                        e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                        basket.classList.add('hovered');
+                    } else {
+                        basket.classList.remove('hovered');
                     }
-                } else {
-                    alert("🤖 Robot Dedektif: Bip bop! Yanlış sınıflandırma. Bu dondurma o sepete ait değil!");
+                });
+            });
+
+            ice.addEventListener('pointerup', (e) => {
+                if (!isDragging || activeIceCream !== ice) return;
+                isDragging = false;
+                ice.releasePointerCapture(e.pointerId);
+                activeIceCream = null;
+
+                let droppedBasket = null;
+                
+                // Öğenin hangi sepetin üzerine bırakıldığını tespit et
+                baskets.forEach(basket => {
+                    const rect = basket.getBoundingClientRect();
+                    if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                        e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                        droppedBasket = basket;
+                    }
+                    basket.classList.remove('hovered');
+                });
+
+                // Öğenin pozisyonunu sıfırla
+                ice.style.transform = '';
+                ice.style.transition = 'transform 0.2s';
+                ice.style.zIndex = '10';
+
+                if (droppedBasket) {
+                    const iceType = ice.dataset.type;
+                    const basketTarget = droppedBasket.dataset.target;
+
+                    if (iceType === basketTarget) {
+                        droppedBasket.classList.add('success');
+                        ice.style.display = "none";
+                        playSound('ogrenme');
+                        trainedCount++;
+
+                        let percent = Math.round((trainedCount / requiredTries) * 100);
+                        progress.style.width = percent + "%";
+                        progressText.innerText = percent + "%";
+
+                        statusText.innerHTML = `🎯 Harika! Yapay zeka bu dondurmanın özelliklerini veri tabanına işledi.`;
+
+                        if (trainedCount === requiredTries) {
+                            startAIScannerPhase();
+                        }
+                    } else {
+                        setTimeout(() => {
+                            alert("🤖 Robot Dedektif: Bip bop! Yanlış sınıflandırma. Bu dondurma o sepete ait değil!");
+                        }, 50);
+                    }
                 }
             });
+
+            // Ekran dışına çıkma gibi durumlarda iptal mekanizması
+            ice.addEventListener('pointercancel', (e) => {
+                if (!isDragging || activeIceCream !== ice) return;
+                isDragging = false;
+                ice.releasePointerCapture(e.pointerId);
+                activeIceCream = null;
+                ice.style.transform = '';
+                ice.style.transition = 'transform 0.2s';
+                ice.style.zIndex = '10';
+                baskets.forEach(b => b.classList.remove('hovered'));
+            });
         });
+        // --- SÜRÜKLE BIRAK BİTİŞ ---
 
         // YAPAY ZEKA OTOMATİK ANOMALİ TESPİT AŞAMASI
         function startAIScannerPhase() {

@@ -179,45 +179,50 @@
             <div class="ai-ear" id="ai-ear">👂</div>
         </div>
 
-        <div class="sound-zone" id="sound-zone">
-            <div class="sound-wave" id="sound-monster" draggable="true" data-sound="canavar">👹<span>Kükreme</span></div>
-            <div class="sound-wave" id="sound-cat" draggable="true" data-sound="kedi">🐱<span>Miyav</span></div>
-            <div class="sound-wave" id="sound-bird" draggable="true" data-sound="kus">🐦<span>Cik Cik</span></div>
-        </div>
+       <div class="sound-zone" id="sound-zone">
+    <div class="sound-wave" id="sound-monster" draggable="true" data-sound="canavar">👹<span>Kükreme</span></div>
+    <div class="sound-wave" id="sound-cat" draggable="true" data-sound="kedi">🐱<span>Miyav</span></div>
+    <div class="sound-wave" id="sound-bird" draggable="true" data-sound="kus">🐦<span>Cik Cik</span></div>
+    <div class="sound-wave" id="sound-human" draggable="true" data-sound="insan">🙋‍♂️<span>Merhaba</span></div>
+</div>
 
         <div id="status-text" class="status-panel">🤖 Kulak hazır! Lütfen bana sesleri dinleterek eğit.</div>
     </div>
 
     <script>
-        // GERÇEK SES MOTORU BULUT BAĞLANTILARI
-        const audioMonster = new Audio('https://actions.google.com/sounds/v1/creatures/monster_growl.ogg');
-        const audioCat = new Audio('https://actions.google.com/sounds/v1/animals/cat_meow.ogg');
-        const audioBird = new Audio('https://actions.google.com/sounds/v1/animals/bird_chirp.ogg');
-        const audioDoorOpen = new Audio('https://actions.google.com/sounds/v1/doors/creaky_door_open.ogg');
-        const audioAccessDenied = new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
+      // SES MOTORU BAĞLANTI LİNKLERİ (Çalışan alternatifleriyle güncellendi)
+const audioMonster = new Audio('https://actions.google.com/sounds/v1/creatures/monster_growl.ogg');
+const audioCat = new Audio('https://upload.wikimedia.org/wikipedia/commons/b/bb/Kitten-meow.ogg'); // Kedi Sesi
+const audioBird = new Audio('https://upload.wikimedia.org/wikipedia/commons/e/e3/Bird-chirping.ogg'); // Kuş Sesi
+const audioHuman = new Audio('https://upload.wikimedia.org/wikipedia/commons/0/0a/En-us-hello.ogg'); // İnsan Merhaba Sesi
+const audioDoorOpen = new Audio('https://actions.google.com/sounds/v1/doors/creaky_door_open.ogg');
+const audioAccessDenied = new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
 
-        function playSound(type) {
-            // Seslerin üst üste binip bozulmaması için önce sıfırlıyoruz
-            audioMonster.pause(); audioMonster.currentTime = 0;
-            audioCat.pause(); audioCat.currentTime = 0;
-            audioBird.pause(); audioBird.currentTime = 0;
-            
-            if (type === 'canavar') audioMonster.play();
-            if (type === 'kedi') audioCat.play();
-            if (type === 'kus') audioBird.play();
-            if (type === 'kapi_ac') audioDoorOpen.play();
-            if (type === 'reddedildi') audioAccessDenied.play();
-        }
+function playSound(type) {
+    // Seslerin üst üste binip bozulmaması için önce sıfırlıyoruz
+    audioMonster.pause(); audioMonster.currentTime = 0;
+    audioCat.pause(); audioCat.currentTime = 0;
+    audioBird.pause(); audioBird.currentTime = 0;
+    audioHuman.pause(); audioHuman.currentTime = 0; // İnsan sesi sıfırlama
+    
+    if (type === 'canavar') audioMonster.play();
+    if (type === 'kedi') audioCat.play();
+    if (type === 'kus') audioBird.play();
+    if (type === 'insan') audioHuman.play(); // İnsan sesi çalma
+    if (type === 'kapi_ac') audioDoorOpen.play();
+    if (type === 'reddedildi') audioAccessDenied.play();
+}
 
         const requiredTries = 6;
         let trainedCount = 0;
 
-        const testGuests = [
-            { name: "Küçük Kedi 🐱", sound: "kedi", msg: "Miyav! Ben komşu kedi, süt istemeye geldim." },
-            { name: "Korkunç Canavar 👹", sound: "canavar", msg: "WRAAAR! Ben ev sahibiyim, kapıyı aç!" },
-            { name: "Minik Kuş 🐦", sound: "kus", msg: "Cik cik! Çatıda yuva yapmaya geldim." },
-            { name: "Yabancı Canavar 👹", sound: "canavar", msg: "ROAAAR! Eve girmek istiyorum!" }
-        ];
+       const testGuests = [
+    { name: "Küçük Kedi 🐱", sound: "kedi", msg: "Miyav! Ben komşu kedi, süt istemeye geldim." },
+    { name: "Korkunç Canavar 👹", sound: "canavar", msg: "WRAAAR! Ben ev sahibiyim, kapıyı aç!" },
+    { name: "Güler Yüzlü İnsan 🙋‍♂️", sound: "insan", msg: "Merhaba! Ben karşı komşuyum, tanışmaya geldim." },
+    { name: "Minik Kuş 🐦", sound: "kus", msg: "Cik cik! Çatıda yuva yapmaya geldim." },
+    { name: "Yabancı Canavar 👹", sound: "canavar", msg: "ROAAAR! Eve girmek istiyorum!" }
+];
         let testIndex = 0;
 
         const sounds = document.querySelectorAll('.sound-wave');
@@ -228,30 +233,94 @@
         const doorEye = document.getElementById('door-eye');
         const soundZone = document.getElementById('sound-zone');
 
-        // Masaüstü Sürükle Bırak Olayları
+        // HEM BİLGİSAYAR HEM TABLET UYUMLU SÜRÜKLE BIRAK SİSTEMİ (POINTER EVENTS)
+        let activeDragElement = null;
+        let startX = 0;
+        let startY = 0;
+        let hasMoved = false;
+
         sounds.forEach(sound => {
-            sound.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', e.target.id);
-            });
-            // Tıklayınca da ses çıksın (5 yaş grubu için kolaylık)
-            sound.addEventListener('click', (e) => {
-                const soundType = e.currentTarget.dataset.sound;
-                playSound(soundType);
-            });
-        });
+            // Tabletlerde kaydırma hareketinin sürüklemeyi bozmasını engelle
+            sound.style.touchAction = 'none';
+            
+            // Tarayıcının kendi masaüstü sürükleme gölgesini iptal et
+            sound.addEventListener('dragstart', (e) => e.preventDefault());
 
-        ear.addEventListener('dragover', (e) => e.preventDefault());
-        ear.addEventListener('dragenter', () => ear.classList.add('hovered'));
-        ear.addEventListener('dragleave', () => ear.classList.remove('hovered'));
-        
-        ear.addEventListener('drop', (e) => {
-            ear.classList.remove('hovered');
-            const draggedId = e.dataTransfer.getData('text/plain');
-            const draggedElement = document.getElementById(draggedId);
-            if (!draggedElement) return;
-            const soundType = draggedElement.dataset.sound;
+            sound.addEventListener('pointerdown', (e) => {
+                activeDragElement = sound;
+                startX = e.clientX;
+                startY = e.clientY;
+                hasMoved = false;
+                sound.style.zIndex = '1000';
+                sound.style.transition = 'none'; // Sürüklerken gecikmesiz takip etmesi için animasyonu kapat
+                sound.setPointerCapture(e.pointerId);
+            });
 
-            processAudioTraining(soundType, draggedElement.innerText.substring(0,2));
+            sound.addEventListener('pointermove', (e) => {
+                if (activeDragElement !== sound) return;
+                
+                const currentX = e.clientX;
+                const currentY = e.clientY;
+                const deltaX = currentX - startX;
+                const deltaY = currentY - startY;
+
+                // Küçük titreşimleri engelle, gerçekten hareket ettirildiyse kaydet
+                if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+                    hasMoved = true;
+                }
+
+                // Elemanı parmağın/farenin altında kaydır
+                sound.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+
+                // Kulağın koordinatlarını al ve çakışma (hover) kontrolü yap
+                const earRect = ear.getBoundingClientRect();
+                if (currentX >= earRect.left && currentX <= earRect.right &&
+                    currentY >= earRect.top && currentY <= earRect.bottom) {
+                    ear.classList.add('hovered');
+                } else {
+                    ear.classList.remove('hovered');
+                }
+            });
+
+            sound.addEventListener('pointerup', (e) => {
+                if (activeDragElement !== sound) return;
+                
+                sound.releasePointerCapture(e.pointerId);
+                activeDragElement = null;
+                
+                sound.style.zIndex = '';
+                sound.style.transform = '';
+                sound.style.transition = 'transform 0.2s'; // Orijinal CSS animasyonunu geri yükle
+
+                const currentX = e.clientX;
+                const currentY = e.clientY;
+                
+                const earRect = ear.getBoundingClientRect();
+                const isOverEar = (currentX >= earRect.left && currentX <= earRect.right &&
+                                   currentY >= earRect.top && currentY <= earRect.bottom);
+
+                ear.classList.remove('hovered');
+
+                if (isOverEar) {
+                    // Eğer kulağın üzerine bırakıldıysa eğitimi tetikle
+                    const soundType = sound.dataset.sound;
+                    processAudioTraining(soundType, sound.innerText.substring(0,2));
+                } else if (!hasMoved) {
+                    // Eğer sürükleme yapılmadıysa, sadece dokunulup bırakıldıysa (Tıklama modifikasyonu)
+                    const soundType = sound.dataset.sound;
+                    playSound(soundType);
+                }
+            });
+
+            sound.addEventListener('pointercancel', (e) => {
+                if (activeDragElement !== sound) return;
+                sound.releasePointerCapture(e.pointerId);
+                activeDragElement = null;
+                sound.style.zIndex = '';
+                sound.style.transform = '';
+                sound.style.transition = 'transform 0.2s';
+                ear.classList.remove('hovered');
+            });
         });
 
         function processAudioTraining(type, emoji) {

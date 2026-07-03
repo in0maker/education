@@ -7,7 +7,6 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            
             margin: 0;
             display: flex;
             justify-content: center;
@@ -38,7 +37,7 @@
             margin-bottom: 25px;
         }
         .score-board {
-            background: #eaf3fb; /* Görseldeki açık mavi kutu */
+            background: #eaf3fb; 
             color: #1b6ca8;
             padding: 12px;
             border-radius: 8px;
@@ -54,7 +53,7 @@
         }
         .robot {
             flex: 1;
-            border: 2px dashed #b0bcc2; /* Görseldeki ince gri kesik çizgi */
+            border: 2px dashed #b0bcc2; 
             border-radius: 12px;
             padding: 30px 20px;
             transition: all 0.3s ease;
@@ -148,7 +147,7 @@
         </div>
 
         <div class="food-zone">
-            <div id="active-food" class="draggable" draggable="true"></div>
+            <div id="active-food" class="draggable"></div>
         </div>
 
         <div id="ai-status" class="status-panel"></div>
@@ -198,27 +197,92 @@
             }
         }
 
-        // Sürükle Bırak Mekaniği
-        activeFoodEl.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', foods[currentFoodIndex].type);
+        // --- HEM BİLGİSAYAR HEM TABLET İÇİN POINTER EVENTS SÜRÜKLE-BIRAK SİSTEMİ ---
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+
+        // Tarayıcının varsayılan davranışlarını engelle
+        activeFoodEl.addEventListener('dragstart', (e) => e.preventDefault());
+        activeFoodEl.style.touchAction = 'none';
+
+        activeFoodEl.addEventListener('pointerdown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            // Sürüklerken animasyon gecikmesini kaldır
+            activeFoodEl.style.transition = 'none'; 
+            activeFoodEl.setPointerCapture(e.pointerId);
         });
 
-        robots.forEach(robot => {
-            robot.addEventListener('dragover', (e) => e.preventDefault());
-            robot.addEventListener('dragenter', function() { this.classList.add('hovered'); });
-            robot.addEventListener('dragleave', function() { this.classList.remove('hovered'); });
-            robot.addEventListener('drop', function(e) {
-                this.classList.remove('hovered');
-                const foodType = e.dataTransfer.getData('text/plain');
-                const robotTarget = this.getAttribute('data-target');
+        activeFoodEl.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            // Öğeyi parmak/fare ile hareket ettir
+            activeFoodEl.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+
+            // Robotların üzerine gelip gelinmediğini kontrol et (Hover efekti)
+            robots.forEach(robot => {
+                const rect = robot.getBoundingClientRect();
+                if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                    e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                    robot.classList.add('hovered');
+                } else {
+                    robot.classList.remove('hovered');
+                }
+            });
+        });
+
+        activeFoodEl.addEventListener('pointerup', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            activeFoodEl.releasePointerCapture(e.pointerId);
+
+            let droppedRobot = null;
+            
+            // Öğenin hangi robotun üzerine bırakıldığını tespit et
+            robots.forEach(robot => {
+                const rect = robot.getBoundingClientRect();
+                if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                    e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                    droppedRobot = robot;
+                }
+                robot.classList.remove('hovered');
+            });
+
+            // Öğenin pozisyonunu ve orijinal CSS animasyonlarını sıfırla
+            activeFoodEl.style.transform = '';
+            activeFoodEl.style.transition = 'transform 0.2s, top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s';
+
+            if (droppedRobot) {
+                const foodType = foods[currentFoodIndex].type;
+                const robotTarget = droppedRobot.getAttribute('data-target');
 
                 if (foodType === robotTarget) {
                     processCorrectDrop(robotTarget);
                 } else {
-                    alert("🤖 Bip bop! Yanlış sınıflandırma. Tekrar dene!");
+                    // Yanlış eşleşmede uyarı ver (Transform sıfırlandıktan hemen sonra)
+                    setTimeout(() => {
+                        alert("🤖 Bip bop! Yanlış sınıflandırma. Tekrar dene!");
+                    }, 50);
                 }
-            });
+            }
         });
+
+        // Sürükleme işlemi ekran dışına çıkarsa veya iptal edilirse güvenli sıfırlama
+        activeFoodEl.addEventListener('pointercancel', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            activeFoodEl.releasePointerCapture(e.pointerId);
+            activeFoodEl.style.transform = '';
+            activeFoodEl.style.transition = 'transform 0.2s, top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s';
+            robots.forEach(r => r.classList.remove('hovered'));
+        });
+        // --- SÜRÜKLE BIRAK BİTİŞ ---
 
         function processCorrectDrop(type) {
             if (type === 'meyve') {
