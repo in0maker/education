@@ -25,8 +25,8 @@
             position: absolute; 
             top: 30px; 
             left: 30px; 
-            width: 40%; /* Mobilde küçülmesi için yüzdelik verildi */
-            max-width: 220px; /* Maksimum genişlik sınırı */
+            width: 40%; 
+            max-width: 220px; 
             height: auto;
             z-index: 10;
         }
@@ -41,7 +41,7 @@
         .view {
             display: none; flex-direction: column; align-items: center; justify-content: center;
             z-index: 2; width: 100%; animation: fadeIn 0.4s ease;
-            flex: 1; /* İçeriğin dikeyde tam ortalanması için eklendi */
+            flex: 1; 
         }
         .view.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
@@ -79,24 +79,47 @@
         .btn-main {
             background-color: #ff5252; color: #ffffff; border: none; border-radius: 30px;
             padding: 20px 60px; font-size: 2rem; font-weight: bold; cursor: pointer;
-            box-shadow: 0 8px 0 #d32f2f; 0 15px 20px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 8px 0 #d32f2f, 0 15px 20px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px;
             transition: all 0.1s;
         }
         .btn-main:active { transform: translateY(8px); box-shadow: 0 0px 0 #1a1a1a; }
         @keyframes floatAnim { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
         /* --- BÖLÜMLER (MENÜ) EKRANI STİLLERİ --- */
-        .menu-title { color: #2b2b2b; font-size: 3.5rem; margin-bottom: 40px; text-shadow: 2px 2px 0px rgba(255,255,255,0.4); }
-        .levels-grid { display: flex; gap: 25px; flex-wrap: wrap; justify-content: center; max-width: 800px; padding: 10px; }
+        .menu-title { color: #2b2b2b; font-size: 3.5rem; margin-bottom: 30px; text-shadow: 2px 2px 0px rgba(255,255,255,0.4); text-align: center; }
+        
+        .levels-grid { 
+            display: grid; 
+            /* En az 220px genişliğinde kolonlar oluştur, sığmayanları alt satıra at (3'lü yapıya uygun) */
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 40px; 
+            justify-items: center; 
+            width: 100%; 
+            max-width: 950px; 
+            padding: 20px;
+            box-sizing: border-box;
+        }
         
         .level-card {
-            background-color: #ffffff; border-radius: 30px; width: 220px; height: 220px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer; box-shadow: 0 10px 0 #cccccc, 0 15px 20px rgba(0,0,0,0.1); transition: all 0.1s ease;
+            background-color: #ffffff; 
+            border-radius: 35px; 
+            width: 100%; /* Bulunduğu grid kolonuna göre esner */
+            max-width: 260px; /* Çok fazla büyümesini engeller */
+            aspect-ratio: 1 / 1; /* Yükseklik ve genişliği her zaman kare yapar */
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            cursor: pointer; 
+            box-shadow: 0 10px 0 #cccccc, 0 15px 20px rgba(0,0,0,0.1); 
+            transition: all 0.1s ease;
+            padding: 20px;
+            box-sizing: border-box;
         }
+        
         .level-card:active { transform: translateY(10px); box-shadow: 0 0px 0 #cccccc; }
-        .level-icon { font-size: 5rem; margin-bottom: 10px; }
-        .level-name { font-size: 1.6rem; font-weight: bold; color: #333; text-align: center; padding: 0 10px; }
+        .level-icon { font-size: 4.5rem; margin-bottom: 15px; text-align: center; }
+        .level-name { font-size: 1.6rem; font-weight: bold; color: #333; text-align: center; line-height: 1.2; padding: 0; margin: 0; }
         
         .btn-back {
             margin-top: 50px; background-color: #ff5252; color: white; border: none;
@@ -104,13 +127,14 @@
             cursor: pointer; box-shadow: 0 6px 0 #d32f2f; transition: all 0.1s;
         }
         .btn-back:active { transform: translateY(6px); box-shadow: 0 0 0 #d32f2f; }
-/* MOBİL VE TABLET UYUMU İÇİN MEDYA SORGULARI */
-        @media (max-width: 850px), (max-height: 800px) {
+
+        /* MOBİL (SADECE GENİŞLİĞE GÖRE DAR EKRANLAR) UYUMU */
+        @media (max-width: 768px) {
             body { padding: 15px 10px; }
             
             /* Giriş Ekranı Küçültmeleri */
             .speech-bubble { font-size: 1.2rem; padding: 15px 25px; margin-bottom: 20px; }
-            .character-card { width: 280px; padding: 25px 15px; margin-bottom: 25px; }
+            .character-card { width: 260px; padding: 25px 15px; margin-bottom: 25px; }
             .sparky-avatar { width: 140px; height: 140px; }
             .sparky-avatar::before { top: -15px; height: 20px; }
             .sparky-antenna-glow { top: -25px; width: 15px; height: 15px; }
@@ -122,10 +146,18 @@
             .btn-main { padding: 15px 40px; font-size: 1.6rem; }
 
             /* Menü Ekranı Küçültmeleri */
-            .menu-title { font-size: 2.5rem; margin-bottom: 20px; }
-            .levels-grid { gap: 15px; }
-            .level-card { width: 150px; height: 150px; border-radius: 20px; }
-            .level-icon { font-size: 3.5rem; margin-bottom: 5px; }
+            .menu-title { font-size: 2.2rem; margin-bottom: 20px; }
+            .levels-grid { 
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+                gap: 20px; 
+                padding: 10px;
+            }
+            .level-card { 
+                max-width: 170px;
+                border-radius: 25px; 
+                padding: 15px;
+            }
+            .level-icon { font-size: 3rem; margin-bottom: 10px; }
             .level-name { font-size: 1.1rem; }
             .btn-back { margin-top: 30px; padding: 12px 30px; font-size: 1.2rem; }
         }
